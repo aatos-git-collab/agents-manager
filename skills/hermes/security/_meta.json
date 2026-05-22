@@ -1,0 +1,8 @@
+{
+  "name": "security",
+  "category": "security",
+  "version": "1.0.0",
+  "description": "Security, encryption, and vault tools",
+  "created": "2026-03-30",
+  "type": "category"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "ai-migrate-tools",
+  "category": "ai-migrate-tools",
+  "version": "1.0.0",
+  "description": "Migration workflows for importing user state and customizations from other agent systems into Hermes Agent",
+  "created": "2026-04-22",
+  "type": "category"
+}

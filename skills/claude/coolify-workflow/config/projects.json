@@ -1,0 +1,11 @@
+{
+  "description": "Coolify project configurations. Add new projects here.",
+  "projects": {
+    "risheng-pawnshop": {
+      "uuid": "mgzxm6wb7vahqjhme4pi3k6m",
+      "git_repo": "aatos-git-collab/risheng-pawnshop",
+      "branch": "version-2.5",
+      "fqdn": "rs.agent.nexeraa.io"
+    }
+  }
+}

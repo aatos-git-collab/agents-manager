@@ -1,0 +1,129 @@
+#!/bin/bash
+# Detect AGENTS_HOME — self-locating, works on any home directory
+if [ -z "$AGENTS_HOME" ]; then
+    _self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    case "$(basename "$_self")" in
+        git-hooks)        AGENTS_HOME="$(dirname "$_self")" ;;
+        .monitor)         AGENTS_HOME="$(dirname "$_self")" ;;
+        watchdogs)        AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        safety-scripts)   AGENTS_HOME="$(dirname "$_self")" ;;
+        scripts)          AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        *)                AGENTS_HOME="/root/.agents-manager" ;;
+    esac
+    export AGENTS_HOME
+fi
+
+# System-wide git pre-push hook
+# Reads allowlist from $AGENTS_HOME/safety/allowlist_origins.txt
+# Per-repo override: .git-hooks-config.json at repo root
+set -euo pipefail
+
+ALLOWLIST="$AGENTS_HOME/safety/allowlist_origins.txt"
+LOG="$AGENTS_HOME/logs/git-safety.log"
+mkdir -p "$(dirname "$LOG")"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [PRE-PUSH] $*" | tee -a "$LOG"; }
+
+# Load allowlist from safety folder (human-editable, agent-immutable when locked)
+load_allowlist() {
+    local origins=()
+    if [ -f "$ALLOWLIST" ]; then
+        while IFS= read -r line || [ -n "$line" ]; do
+            line="$(echo "$line" | sed 's/#.*//')"          # strip comments
+            line="$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"  # strip leading/trailing ws
+            [ -n "$line" ] && origins+=("$line")
+        done < "$ALLOWLIST"
+    fi
+    # Fallback defaults if file is missing
+    [ ${#origins[@]} -eq 0 ] && origins=("github.com/aatos-git-collab" "github.com/novem-ai")
+    printf '%s\n' "${origins[@]}"
+}
+
+# Resolve the remote being pushed to
+_remote="$(git remote get-url origin 2>/dev/null || true)"
+[ -z "$_remote" ] && _remote="$(git remote get-url "$(git rev-parse --abbrev-ref HEAD@{u} 2>/dev/null | cut -d/ -f1)" 2>/dev/null || echo '')"
+[ -z "$_remote" ] && _remote="$(git remote get-url origin 2>/dev/null || true)"
+[ -z "$_remote" ] && exit 0  # No remote — nothing to block
+
+log "Push to: $_remote"
+
+# Normalize remote URL to host/org for matching
+# git@github.com:org/repo.git  →  github.com/org
+# https://github.com/org/repo   →  github.com/org
+_normalized="$_remote"
+_normalized="${_normalized#git@}"           # strip git@
+_normalized="${_normalized#https://}"      # strip https://
+_normalized="${_normalized#http://}"       # strip http://
+_normalized="${_normalized#ssh://}"       # strip ssh://
+_normalized="${_normalized#//}"           # strip leading //
+_normalized="${_normalized%/}"            # strip trailing /
+_normalized="${_normalized%.git}"         # strip trailing .git
+
+# Extract host and org from normalized URL
+_host=""
+_org=""
+if echo "$_normalized" | grep -q ":"; then
+    # SSH format: github.com:org/repo
+    _host="${_normalized%%:*}"
+    _path="${_normalized#*:}"
+    _org="${_path%%/*}"
+else
+    # HTTPS format: github.com/org/repo
+    _host="${_normalized%%/*}"
+    _path="${_normalized#*/}"
+    _org="${_path%%/*}"
+fi
+
+_normalized="$_host/$_org"
+
+# Per-repo config overrides allowlist
+CONFIG_FILE=".git-hooks-config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    PER_REPO="$(python3 -c "
+import json, sys
+try:
+    data = json.load(open('$CONFIG_FILE'))
+    origins = data.get('allowed_push_origins', [])
+    for o in origins: print(o)
+except: pass
+" 2>/dev/null || true)"
+    [ -n "$PER_REPO" ] && {
+        log "Using per-repo origins from $CONFIG_FILE"
+        ORIGINS=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && ORIGINS+=("$line")
+        done <<< "$PER_REPO"
+    }
+fi
+
+# Default to loaded allowlist
+ORIGINS=()
+while IFS= read -r o; do
+    ORIGINS+=("$o")
+done <<< "$(load_allowlist)"
+
+BLOCK=true
+for allowed in "${ORIGINS[@]}"; do
+    if echo "$_normalized" | grep -q "$allowed"; then
+        BLOCK=false
+        break
+    fi
+done
+
+if [ "$BLOCK" = true ]; then
+    log "BLOCKED: '$_remote' not in allowlist: ${ORIGINS[*]}"
+    echo ""
+    echo "=== GIT SAFETY — PUSH BLOCKED ==="
+    echo "  Remote: $_remote"
+    echo "  Allowed: ${ORIGINS[*]}"
+    echo ""
+    echo "  New repo? Create it first:"
+    echo "    gh repo create <name> --private --org aatos-git-collab"
+    echo ""
+    echo "  Allowlist: $ALLOWLIST"
+    echo "  Override per-repo: create .git-hooks-config.json at repo root"
+    echo ""
+    exit 1
+fi
+
+log "OK: $_remote is allowed"

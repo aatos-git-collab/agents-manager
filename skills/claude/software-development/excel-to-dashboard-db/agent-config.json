@@ -1,0 +1,32 @@
+{
+  "skillName": "excel-to-dashboard-db",
+  "version": "1.0.0",
+  "agents": ["main"],
+  "permissions": ["file_read", "file_write"],
+  "role": {
+    "slot": "050",
+    "type": "data-specialist",
+    "delegation": true,
+    "selfLearning": true
+  },
+  "scripts": ["excel-to-db.py", "db-to-dashboard.py"],
+  "dependencies": ["python3", "pandas"],
+  "selfLearning": {
+    "enabled": true,
+    "patternDir": "/memory/patterns/excel-dashboard/",
+    "scripts": [
+      "learn-from-session.sh",
+      "recall-patterns.sh",
+      "learn-from-feedback.sh"
+    ],
+    "learningLoop": {
+      "observe": true,
+      "extract": true,
+      "store": true,
+      "recall": true,
+      "apply": true
+    }
+  },
+  "createdAt": "2026-02-14T16:42:00Z",
+  "author": "talent-architect"
+}

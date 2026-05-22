@@ -1,0 +1,6 @@
+{
+  "timestamp": "2026-04-23T07:17:47Z",
+  "mode": "fix",
+  "component": "all",
+  "report": aatosteam              OK     vv0.3.0, 13 presets, 1 tmux sessions\nhermes-browser         OK     camoufox port=9377\ngit-safety             OK     hook active\nconfig-backup-restore  FAIL     watchdog active\nhermes-agent           OK     v14, 57 skills\nrebranding-tools        FAIL     watchdog ready\n
+}

@@ -1,0 +1,10 @@
+name: auto-new-trigger
+description: "At ~78% context (131K tokens) — inject /new into conversation before compression happens"
+version: "1.0.0"
+hook_event: pre_llm_call
+platforms: [cli, mattermost, telegram, discord, slack]
+trigger_conditions:
+  - "approx_input_tokens >= 102,400 (78% of 131K MiniMax M2 context)"
+  - "is_first_turn: false"
+  - "conversation_history has 3+ messages"
+safety: "Non-blocking — only injects context hint, does not hard-reset session"

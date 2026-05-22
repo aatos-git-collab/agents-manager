@@ -1,0 +1,47 @@
+{
+  "profiles": {
+    "work-profile": {
+      "fingerprint": "windows_chrome",
+      "proxy": null,
+      "timezone": "UTC",
+      "cookies": "/root/stealth-browser/profiles/cookies/work-profile.json"
+    },
+    "research": {
+      "fingerprint": "linux_firefox",
+      "proxy": null,
+      "timezone": "Europe/London",
+      "cookies": "/root/stealth-browser/profiles/cookies/research.json"
+    },
+    "default": {
+      "fingerprint": "windows_chrome",
+      "proxy": null,
+      "timezone": "UTC",
+      "cookies": "/root/stealth-browser/profiles/cookies/default.json"
+    },
+    "social": {
+      "fingerprint": "android",
+      "proxy": null,
+      "timezone": "UTC",
+      "cookies": "/root/stealth-browser/profiles/cookies/social.json"
+    },
+    "twitter": {
+      "fingerprint": "windows_firefox",
+      "proxy": null,
+      "timezone": "UTC",
+      "cookies": "/root/stealth-browser/profiles/cookies/twitter.json"
+    },
+    "hermes-default": {
+      "fingerprint": "windows_chrome_1",
+      "proxy": null,
+      "timezone": "America/New_York",
+      "cookies": null
+    }
+  },
+  "settings": {
+    "fingerprintRotation": "on-profile-create",
+    "defaultMode": "headless",
+    "defaultGPU": "nvidia",
+    "autoSaveInterval": 300
+  },
+  "activeProfile": "default"
+}

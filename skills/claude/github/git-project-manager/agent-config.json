@@ -1,0 +1,26 @@
+{
+  "skillName": "git-project-manager",
+  "version": "1.0.0",
+  "agents": ["main"],
+  "permissions": ["git", "file_read", "file_write"],
+  "role": {
+    "slot": "300",
+    "type": "orchestration",
+    "delegation": true,
+    "selfLearning": true
+  },
+  "scripts": ["git-manager.py", "agent-brain-backup.py"],
+  "dependencies": ["git", "python3"],
+  "selfLearning": {
+    "enabled": true,
+    "patternDir": "/memory/patterns/projects/",
+    "scripts": [
+      "learn-project-patterns.sh",
+      "recall-patterns.sh",
+      "learn-from-feedback.sh"
+    ]
+  },
+  "brainsRepo": "git@github.com:aatosai/brains.git",
+  "createdAt": "2026-02-14T16:52:00Z",
+  "author": "talent-architect"
+}

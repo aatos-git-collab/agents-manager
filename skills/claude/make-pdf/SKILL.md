@@ -1,0 +1,1 @@
+/root/.claude/skills/gstack/make-pdf/SKILL.md

@@ -1,0 +1,18 @@
+{
+    "headless": true,
+    "os": "windows",
+    "browser": "chrome",
+    "fingerprint": "windows_chrome",
+    "webgl_config": null,
+    "humanize": true,
+    "enable_cache": true,
+    "profile": "default",
+    "proxy":  || "null",
+    "geo": {
+        "locale": "en-US",
+        "timezone": "UTC",
+        "latitude": 37.7749,
+        "longitude": -122.4194
+    },
+    "fingerprint_config": 
+}

@@ -1,0 +1,64 @@
+#!/bin/bash
+# Detect AGENTS_HOME — self-locating, works on any home directory
+if [ -z "$AGENTS_HOME" ]; then
+    _self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    case "$(basename "$_self")" in
+        git-hooks)        AGENTS_HOME="$(dirname "$_self")" ;;
+        .monitor)         AGENTS_HOME="$(dirname "$_self")" ;;
+        watchdogs)        AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        safety-scripts)   AGENTS_HOME="$(dirname "$_self")" ;;
+        scripts)          AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        *)                AGENTS_HOME="/root/.agents-manager" ;;
+    esac
+    export AGENTS_HOME
+fi
+
+# System-wide git pre-commit hook
+# Reads secret patterns from $AGENTS_HOME/safety/secret_patterns.txt
+set -euo pipefail
+
+PATTERNS_FILE="$AGENTS_HOME/safety/secret_patterns.txt"
+LOG="$AGENTS_HOME/logs/git-safety.log"
+mkdir -p "$(dirname "$LOG")"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [PRE-COMMIT] $*" | tee -a "$LOG"; }
+
+# Load patterns from safety folder
+load_patterns() {
+    if [ -f "$PATTERNS_FILE" ]; then
+        cat "$PATTERNS_FILE"
+    fi
+}
+
+# Block files > 5MB
+MAX_SIZE=$((5 * 1024 * 1024))
+LARGE=$(git diff --cached --name-only | while read -r f; do
+    [ -f "$f" ] && [ "$(stat -c%s "$f" 2>/dev/null || echo 0)" -gt $MAX_SIZE ] && echo "$f"
+done | head -10)
+
+if [ -n "$LARGE" ]; then
+    log "BLOCKED: Large files in commit"
+    echo "$LARGE" | while read -r f; do log "  - $f"; done
+    echo "=== BLOCKED: Files > 5MB cannot be committed ==="
+    exit 1
+fi
+
+# Block secret patterns from safety/secret_patterns.txt
+PATTERNS=$(load_patterns)
+if [ -n "$PATTERNS" ]; then
+    while IFS= read -r pattern || [ -n "$pattern" ]; do
+        pattern="$(echo "$pattern" | sed 's/#.*//; s/^[[:space:]]*//; s/[[:space:]]*$//')"
+        [ -z "$pattern" ] && continue
+        if git diff --cached -I '' | grep -Eq "$pattern" 2>/dev/null; then
+            log "BLOCKED: Secret pattern detected: $pattern"
+            echo ""
+            echo "=== GIT SAFETY — SECRET DETECTED ==="
+            echo "Pattern: $pattern"
+            echo "Remove secrets before committing."
+            echo "Patterns: $PATTERNS_FILE"
+            exit 1
+        fi
+    done <<< "$PATTERNS"
+fi
+
+log "OK: pre-commit checks passed"

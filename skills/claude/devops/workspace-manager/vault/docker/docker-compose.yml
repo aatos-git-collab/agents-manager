@@ -1,0 +1,81 @@
+# vault-security — Docker Compose
+# Services: vault-postgres, vault-api (root), isolated-agents (per-agent decrypt-only)
+
+services:
+  vault-postgres:
+    image: postgres:16-alpine
+    container_name: vault-postgres
+    environment:
+      POSTGRES_DB: vaultdb
+      POSTGRES_USER: vaultuser
+      POSTGRES_PASSWORD: vaultpass123
+    volumes:
+      - vault-data:/var/lib/postgresql/data
+    networks:
+      - vault-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vaultuser -d vaultdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vault-api:
+    build:
+      context: ../src/vault-api
+      dockerfile: Dockerfile
+    container_name: vault-api
+    environment:
+      - MASTER_ROOT_SEAL=${MASTER_ROOT_SEAL:-dev-root-seal-change-in-production}
+      - GLOBAL_MASTER_SEAL=${GLOBAL_MASTER_SEAL:-${MASTER_ROOT_SEAL:-dev-root-seal-change-in-production}}
+      - VAULT_MODE=root
+      - VAULT_DB_HOST=vault-postgres
+      - VAULT_DB_PORT=5432
+      - VAULT_DB_NAME=vaultdb
+      - VAULT_DB_USER=vaultuser
+      - VAULT_DB_PASS=vaultpass123
+      - VAULT_ANC_DIR=/opt/vault/anc
+      - VAULT_SEAL_DIR=/opt/vault/seals
+    ports:
+      - "8443:8443"
+    depends_on:
+      vault-postgres:
+        condition: service_healthy
+    networks:
+      - vault-net
+    volumes:
+      - vault-anc:/opt/vault/anc
+      - vault-seals:/opt/vault/seals
+      - ./agent-workspace:/opt/vault/agent-workspace
+
+  # ── Isolated Agent: carol (decrypt-only) ───────────────────────────────────
+  # Bootstrap: RUN ./scripts/create-agent.sh carol
+  # This brings up the agent container with its .seal file and perAgentSeal env
+  isolated-agent-carol:
+    image: vault-isolated-agent:latest
+    container_name: isolated-agent-carol
+    build:
+      context: ../src/isolated-agent
+      dockerfile: Dockerfile
+    env_file:
+      - ./agent-workspace/carol/seal.env
+    volumes:
+      - ./agent-workspace/carol/agent.seal:/seal/agent.seal:ro
+      - ./agent-workspace/carol/system-prompt.txt:/prompt/system-prompt.txt:ro
+    networks:
+      - vault-net
+    ports:
+      - "8444:8444"
+    depends_on:
+      vault-api:
+        condition: service_started
+    restart: "no"  # manage lifecycle via create-agent.sh
+
+networks:
+  vault-net:
+    name: vault-net
+    driver: bridge
+
+volumes:
+  vault-data:
+  vault-anc:
+  vault-seals:

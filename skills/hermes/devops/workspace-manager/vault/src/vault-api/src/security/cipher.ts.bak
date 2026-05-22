@@ -1,0 +1,70 @@
+/**
+ * cipher.ts - Core ChaCha20-Poly1305 encryption/decryption
+ * Port of .servers/modules/security/cipher.py to TypeScript
+ * Uses cryptography library (same as Python's cryptographyhazmat)
+ */
+
+import { ChaCha20Poly1305 } from '@philber/types-lib'; // stub, see implementation below
+import crypto from 'crypto';
+
+export const KEY_LEN = 32;
+export const SALT_LEN = 32;
+export const NONCE_LEN = 12;
+export const PBKDF2_ITERATIONS = 200_000;
+
+export function deriveKey(secret: string, salt: Buffer): Buffer {
+  return crypto.pbkdf2Sync(
+    secret,
+    salt,
+    PBKDF2_ITERATIONS,
+    KEY_LEN,
+    'sha512'
+  );
+}
+
+export interface CipherResult {
+  ciphertext: Buffer;
+  salt: Buffer;
+  nonce: Buffer;
+}
+
+export function encrypt(plaintext: Buffer, secret: string, salt?: Buffer): CipherResult {
+  if (!salt) salt = crypto.randomBytes(SALT_LEN);
+  const nonce = crypto.randomBytes(NONCE_LEN);
+  const key = deriveKey(secret, salt);
+
+  // Use Node's built-in ChaCha20-Poly1305 — same as Python's cryptography library
+  const cipher = crypto.createCipheriv('chacha20-poly1305', key, nonce);
+  // Python: cipher.encrypt(nonce, plaintext, salt) — AAD = salt
+  // Node: setAAD before encrypt to include AAD
+  // @ts-ignore
+  cipher.setAAD(salt);
+  const ciphertext = Buffer.concat([
+    cipher.update(plaintext),
+    cipher.final(),
+    cipher.getAuthTag()
+  ]);
+
+  return { ciphertext, salt, nonce };
+}
+
+export function decrypt(
+  ciphertext: Buffer,
+  secret: string,
+  salt: Buffer,
+  nonce: Buffer
+): Buffer {
+  const key = deriveKey(secret, salt);
+
+  const decipher = crypto.createDecipheriv('chacha20-poly1305', key, nonce);
+  // AAD must match encrypt
+  // @ts-ignore
+  decipher.setAAD(salt);
+  // @ts-ignore
+  decipher.setAuthTag(ciphertext.subarray(ciphertext.length - 16));
+
+  return Buffer.concat([
+    decipher.update(ciphertext.subarray(0, ciphertext.length - 16)),
+    decipher.final()
+  ]);
+}
