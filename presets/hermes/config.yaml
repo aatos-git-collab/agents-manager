@@ -1,8 +1,8 @@
 model:
-  default: MiniMax-M2-7
+  default: MiniMax-M2.7
   provider: anthropic
-  base_url: https://api.minimax.io/anthropic
-  api_key: sk-cp-STCihbhPybNO0q-5N195kl9JJwclCn77i_MYfGIOZHxEem4PArp5xtNPz97zCmLmC-ehJtCaOUMcE8E4mfRFEeYpzgjg5L3lNN41Eit0Ptzl0MpKjqzb6DU
+  base_url: ${MINIMAX_ANTHROPIC_BASE_URL:-https://api.minimax.io/anthropic}
+  api_key: ${MINIMAX_API_KEY}
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
