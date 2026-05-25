@@ -184,3 +184,6 @@ RUN su - aatos -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc"
 
 # ports and volumes
 EXPOSE 8443
+
+# CODEX marker - force rebuild
+LABEL codex.rebuild="$(date +%s)"
