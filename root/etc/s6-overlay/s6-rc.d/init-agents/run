@@ -94,8 +94,8 @@ with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
 print("wrote ~/.claude/settings.json")
 PYEOF
 
-su - user -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
-su - user -c 'python3 -c "import json, os; json.dump({\\"hasCompletedOnboarding\\": True}, open(os.path.expanduser(\\"~/.claude.json\\"), \\"w\\"))"'
+su - user -c 'echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> ~/.bashrc'
+su - user -c 'echo "{\"hasCompletedOnboarding\": true}" > ~/.claude.json'
 
 # create agents-manager launchers in /usr/local/bin
 if ln -sf /config/agents-manager/actions.sh /usr/local/bin/agents-manager 2>/dev/null; then
