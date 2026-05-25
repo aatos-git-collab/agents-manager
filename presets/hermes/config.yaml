@@ -235,7 +235,7 @@ display:
   bell: false
   user_preview: first 2 line(s), last 2 line(s)
 dashboard:
-  theme: default
+  theme: dark
   show_token_analytics: false
 privacy:
   redact_pii: false
