@@ -147,9 +147,19 @@ with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
 PYEOF
 RUN su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
 
-# configure VSCode settings (dark mode, menu bar)
-RUN su - user -c "mkdir -p ~/.local/share/code-server/User" && \
-    su - user -c "cat > ~/.local/share/code-server/User/settings.json << 'VSCODESETTINGS_EOF'\n{\n  \"workbench.colorTheme\": \"Default Dark Modern\",\n  \"window.menuBarVisibility\": \"classic\",\n  \"security.workspace.trust.enabled\": false,\n  \"github.copilot.chat.enabled\": false,\n  \"chat.location\": \"panel\",\n  \"workbench.panel.defaultChatView\": \"cline\"\n}\nVSCODESETTINGS_EOF"
+# configure VSCode settings for user (code-server runs as abc, not user)
+RUN mkdir -p /config/.local/share/code-server/User && \
+    chown -R abc:abc /config/.local && \
+    cat > /config/.local/share/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
+{
+  "workbench.colorTheme": "Default Dark Modern",
+  "window.menuBarVisibility": "classic",
+  "security.workspace.trust.enabled": false,
+  "github.copilot.chat.enabled": false,
+  "chat.location": "panel",
+  "workbench.panel.defaultChatView": "cline"
+}
+VSCODESETTINGS_EOF
 
 # add PATH to user bashrc and create .claude.json
 RUN su - user -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc" && \
