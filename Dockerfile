@@ -81,7 +81,7 @@ COPY /root /
 # Copy VSCode settings to correct location
 RUN mkdir -p /config/.config/code-server/User && \
     chown -R abc:abc /config/.config && \
-    cp /config/agents-manager/settings.json /config/.config/code-server/User/settings.json
+    cp /root/config/agents-manager/settings.json /config/.config/code-server/User/settings.json
 
 # create aatos user with passwordless sudo (UID 911 for code-server compatibility)
 RUN if ! id "aatos" &>/dev/null; then \
