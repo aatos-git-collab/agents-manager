@@ -148,8 +148,8 @@ PYEOF
 RUN su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
 
 # configure VSCode settings for user (code-server runs as abc, not user)
-RUN mkdir -p /config/.local/share/code-server/User && \
-    chown -R abc:abc /config/.local && \
+RUN mkdir -p /config/.local/share/code-server/User /config/.cache/Microsoft && \
+    chown -R abc:abc /config/.local /config/.cache && \
     cat > /config/.local/share/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
 {
   "workbench.colorTheme": "Default Dark Modern",
