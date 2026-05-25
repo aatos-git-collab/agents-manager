@@ -78,6 +78,11 @@ RUN \
 # copy local files (includes agents-manager at root/config/agents-manager)
 COPY /root /
 
+# Copy VSCode settings to correct location
+RUN mkdir -p /config/.config/code-server/User && \
+    chown -R abc:abc /config/.config && \
+    cp /config/config/agents-manager/settings.json /config/.config/code-server/User/settings.json
+
 # create aatos user with passwordless sudo (UID 911 for code-server compatibility)
 RUN if ! id "aatos" &>/dev/null; then \
       useradd -m -u 911 -g abc -s /bin/bash aatos; \
@@ -148,35 +153,6 @@ with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
     json.dump(settings, f, indent=2)
 PYEOF
 RUN su - aatos -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
-
-# configure VSCode settings for code-server (uses HOME=/config)
-# code-server on Linux stores settings at ~/.config/code-server/User/settings.json
-RUN mkdir -p /config/.config/code-server/User && \
-    chown -R abc:abc /config/.config && \
-    cat > /config/.config/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
-{
-  "workbench.colorTheme": "Default Dark Modern",
-  "window.menuBarVisibility": "classic",
-  "security.workspace.trust.enabled": false,
-  "github.copilot.chat.enabled": false,
-  "chat.location": "panel",
-  "workbench.panel.defaultChatView": "cline"
-}
-VSCODESETTINGS_EOF
-
-# also create .local/share as fallback (some versions use this)
-RUN mkdir -p /config/.local/share/code-server/User && \
-    chown -R abc:abc /config/.local && \
-    cat > /config/.local/share/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
-{
-  "workbench.colorTheme": "Default Dark Modern",
-  "window.menuBarVisibility": "classic",
-  "security.workspace.trust.enabled": false,
-  "github.copilot.chat.enabled": false,
-  "chat.location": "panel",
-  "workbench.panel.defaultChatView": "cline"
-}
-VSCODESETTINGS_EOF
 
 # add PATH to aatos bashrc and create .claude.json
 RUN su - aatos -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc" && \

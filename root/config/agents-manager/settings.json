@@ -1,0 +1,8 @@
+{
+  "workbench.colorTheme": "Default Dark Modern",
+  "window.menuBarVisibility": "classic",
+  "security.workspace.trust.enabled": false,
+  "github.copilot.chat.enabled": false,
+  "chat.location": "panel",
+  "workbench.panel.defaultChatView": "cline"
+}
