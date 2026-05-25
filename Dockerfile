@@ -77,13 +77,14 @@ RUN \
 # copy local files (includes agents-manager at root/config/agents-manager)
 COPY /root /
 
-# create user with passwordless sudo
-RUN if ! id "user" &>/dev/null; then \
-      useradd -m -s /bin/bash user; \
+# create aatos user with passwordless sudo (UID 911 for code-server compatibility)
+RUN if ! id "aatos" &>/dev/null; then \
+      useradd -m -u 911 -g abc -s /bin/bash aatos; \
     fi && \
-    echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/user && \
-    chmod 440 /etc/sudoers.d/user && \
-    usermod -aG sudo user
+    echo "aatos ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/aatos && \
+    chmod 440 /etc/sudoers.d/aatos && \
+    echo "root ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/root && \
+    chmod 440 /etc/sudoers.d/root
 
 # install claude for root
 RUN curl -fsSL https://claude.ai/install.sh | bash
@@ -119,8 +120,8 @@ RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
 # create .claude.json for root (skip onboarding)
 RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json
 
-# install claude for user
-RUN su - user -c "curl -fsSL https://claude.ai/install.sh | bash"
+# install claude for aatos
+RUN su - aatos -c "curl -fsSL https://claude.ai/install.sh | bash"
 
 # write user settings.json via heredoc
 RUN cat > /tmp/write_user_settings.py << 'PYEOF'
@@ -145,7 +146,7 @@ os.makedirs(os.path.expanduser("~/.claude/settings"), exist_ok=True)
 with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
     json.dump(settings, f, indent=2)
 PYEOF
-RUN su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
+RUN su - aatos -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
 
 # configure VSCode settings for code-server (uses HOME=/config)
 # code-server on Linux stores settings at ~/.config/code-server/User/settings.json
@@ -176,9 +177,9 @@ RUN mkdir -p /config/.local/share/code-server/User && \
 }
 VSCODESETTINGS_EOF
 
-# add PATH to user bashrc and create .claude.json
-RUN su - user -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc" && \
-    su - user -c "echo '{\"hasCompletedOnboarding\": true}' > ~/.claude.json"
+# add PATH to aatos bashrc and create .claude.json
+RUN su - aatos -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc" && \
+    su - aatos -c "echo '{\"hasCompletedOnboarding\": true}' > ~/.claude.json"
 
 # ports and volumes
 EXPOSE 8443

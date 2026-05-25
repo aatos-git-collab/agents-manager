@@ -3,13 +3,14 @@
 
 echo "**** agents-manager init: installing claude agents ****"
 
-# create user with passwordless sudo (if not exists)
-if ! id "user" &>/dev/null; then
-    useradd -m -s /bin/bash user
-    echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/user
-    chmod 440 /etc/sudoers.d/user
-    usermod -aG sudo user
-    echo "created user account"
+# create aatos user with passwordless sudo (if not exists)
+if ! id "aatos" &>/dev/null; then
+    useradd -m -u 911 -g abc -s /bin/bash aatos
+    echo "aatos ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/aatos
+    chmod 440 /etc/sudoers.d/aatos
+    echo "root ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/root
+    chmod 440 /etc/sudoers.d/root
+    echo "created aatos account"
 fi
 
 # Install claude for root if not present
@@ -57,16 +58,16 @@ fi
 # create .claude.json for root (skip onboarding)
 python3 -c 'import json; json.dump({"hasCompletedOnboarding": True}, open("/root/.claude.json", "w"))'
 
-# install claude for user if not present
-if ! su - user -c "command -v claude" &>/dev/null; then
-    echo "**** installing claude for user ****"
-    su - user -c "curl -fsSL https://claude.ai/install.sh | bash"
+# install claude for aatos if not present
+if ! su - aatos -c "command -v claude" &>/dev/null; then
+    echo "**** installing claude for aatos ****"
+    su - aatos -c "curl -fsSL https://claude.ai/install.sh | bash"
 else
-    echo "claude already installed for user"
+    echo "claude already installed for aatos"
 fi
 
-# write user .claude/settings.json using python
-su - user -c "python3" << 'PYEOF'
+# write aatos .claude/settings.json using python
+su - aatos -c "python3" << 'PYEOF'
 import os, json
 settings = {
     "skipDangerousModePermissionPrompt": True,
@@ -94,8 +95,8 @@ with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
 print("wrote ~/.claude/settings.json")
 PYEOF
 
-su - user -c 'echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> ~/.bashrc'
-su - user -c 'echo "{\"hasCompletedOnboarding\": true}" > ~/.claude.json'
+su - aatos -c 'echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> ~/.bashrc'
+su - aatos -c 'echo "{\"hasCompletedOnboarding\": true}" > ~/.claude.json'
 
 # create agents-manager launchers in /usr/local/bin
 if ln -sf /config/agents-manager/actions.sh /usr/local/bin/agents-manager 2>/dev/null; then
@@ -105,9 +106,9 @@ if ln -sf /config/agents-manager/actions.sh /usr/local/bin/actions 2>/dev/null; 
     echo "created /usr/local/bin/actions"
 fi
 
-# symlink workspace to user home
-if [ -d "/config/workspace" ] && [ ! -L "/home/user" ]; then
-    ln -sf /config/workspace /home/user 2>/dev/null || true
+# symlink workspace to aatos home
+if [ -d "/config/workspace" ] && [ ! -L "/home/aatos" ]; then
+    ln -sf /config/workspace /home/aatos 2>/dev/null || true
 fi
 
 echo "**** agents-manager init complete ****"
