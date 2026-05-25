@@ -3,8 +3,6 @@
 
 echo "**** agents-manager init: installing claude agents ****"
 
-AGENTS_DIR="/config/agents-manager"
-
 # create user with passwordless sudo (if not exists)
 if ! id "user" &>/dev/null; then
     useradd -m -s /bin/bash user
@@ -22,43 +20,34 @@ else
     echo "claude already installed for root"
 fi
 
-# configure claude for root
-mkdir -p /root/.claude/settings
-cat > /root/.claude/settings.json << 'SETTINGS_EOF'
-{
-  "skipDangerousModePermissionPrompt": true,
-  "env": {
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
-    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux",
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "MINIMAX_API_KEY": "'"${MINIMAX_API_KEY}"'",
-    "GITHUB_TOKEN": "'"${GITHUB_TOKEN}"'",
-    "MATTERMOST_URL": "'"${MATTERMOST_URL}"'",
-    "MATTERMOST_TOKEN": "'"${MATTERMOST_TOKEN}"'"
-  },
-  "dangerouslyAlwaysAllow": true,
-  "allow": [
-    "Edit",
-    "Write",
-    "Bash",
-    "Read",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "TodoRead",
-    "TodoWrite"
-  ]
+# write root .claude/settings.json using python
+python3 << 'PYEOF'
+import os, json
+settings = {
+    "skipDangerousModePermissionPrompt": True,
+    "env": {
+        "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
+        "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
+        "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
+        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+        "teammateMode": "tmux",
+        "MINIMAX_API_KEY": os.environ.get("MINIMAX_API_KEY", ""),
+        "GITHUB_TOKEN": os.environ.get("GITHUB_TOKEN", ""),
+        "MATTERMOST_URL": os.environ.get("MATTERMOST_URL", ""),
+        "MATTERMOST_TOKEN": os.environ.get("MATTERMOST_TOKEN", "")
+    },
+    "dangerouslyAlwaysAllow": True,
+    "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
 }
-SETTINGS_EOF
+os.makedirs("/root/.claude/settings", exist_ok=True)
+with open("/root/.claude/settings.json", "w") as f:
+    json.dump(settings, f, indent=2)
+print("wrote /root/.claude/settings.json")
+PYEOF
 
 # add PATH to root bashrc
 if ! grep -q '.local/bin' /root/.bashrc 2>/dev/null; then
@@ -66,11 +55,7 @@ if ! grep -q '.local/bin' /root/.bashrc 2>/dev/null; then
 fi
 
 # create .claude.json for root (skip onboarding)
-cat > /root/.claude.json << 'EOF'
-{
-  "hasCompletedOnboarding": true
-}
-EOF
+echo '{"hasCompletedOnboarding": true}' > /root/.claude.json
 
 # install claude for user if not present
 if ! su - user -c "command -v claude" &>/dev/null; then
@@ -80,49 +65,37 @@ else
     echo "claude already installed for user"
 fi
 
-# configure claude for user
-su - user -c "mkdir -p ~/.claude/settings"
-su - user -c 'cat > ~/.claude/settings.json << ' "SETTINGS_EOF" '
-{
-  "skipDangerousModePermissionPrompt": true,
-  "env": {
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux",
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "MINIMAX_API_KEY": "'"${MINIMAX_API_KEY}"'",
-    "GITHUB_TOKEN": "'"${GITHUB_TOKEN}"'",
-    "MATTERMOST_URL": "'"${MATTERMOST_URL}"'",
-    "MATTERMOST_TOKEN": "'"${MATTERMOST_TOKEN}"'"
-  },
-  "dangerouslyAlwaysAllow": true,
-  "allow": [
-    "Edit",
-    "Write",
-    "Bash",
-    "Read",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "TodoRead",
-    "TodoWrite"
-  ]
+# write user .claude/settings.json using python
+su - user -c "python3" << 'PYEOF'
+import os, json
+settings = {
+    "skipDangerousModePermissionPrompt": True,
+    "env": {
+        "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
+        "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
+        "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
+        "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
+        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+        "teammateMode": "tmux",
+        "MINIMAX_API_KEY": os.environ.get("MINIMAX_API_KEY", ""),
+        "GITHUB_TOKEN": os.environ.get("GITHUB_TOKEN", ""),
+        "MATTERMOST_URL": os.environ.get("MATTERMOST_URL", ""),
+        "MATTERMOST_TOKEN": os.environ.get("MATTERMOST_TOKEN", "")
+    },
+    "dangerouslyAlwaysAllow": True,
+    "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
 }
-'"'"'SETTINGS_EOF'"'"''
+os.makedirs(os.path.expanduser("~/.claude/settings"), exist_ok=True)
+with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
+    json.dump(settings, f, indent=2)
+print("wrote ~/.claude/settings.json")
+PYEOF
 
 su - user -c 'echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc'
-su - user -c 'cat > ~/.claude.json << '"'"'EOF'"'"'
-{
-  "hasCompletedOnboarding": true
-}
-EOF
+su - user -c 'echo \'{"hasCompletedOnboarding": true}\' > ~/.claude.json'
 
 # create agents-manager launchers in /usr/local/bin
 if ln -sf /config/agents-manager/actions.sh /usr/local/bin/agents-manager 2>/dev/null; then
