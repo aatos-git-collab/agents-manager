@@ -33,6 +33,7 @@ agents-manager/
 
 ```bash
 sudo bash /magicai/agents-manager/actions.sh install global
+bash ~/agents-manager/actions.sh install global
 ```
 
 This syncs the shared base to `/usr/local/share/agents-manager/` and creates launchers in `/usr/local/bin/`.
