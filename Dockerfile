@@ -4,10 +4,11 @@ FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 
 # set version label
 ARG BUILD_DATE
-ARG VERSION
+ARG VERSION="v1.2.0-codex"
 ARG CODE_RELEASE
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
+LABEL org.label-schema.build="codex-branch"
 
 # environment settings
 ARG DEBIAN_FRONTEND="noninteractive"
