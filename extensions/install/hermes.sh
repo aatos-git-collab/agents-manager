@@ -11,10 +11,16 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Use SCRIPT_DIR from parent if passed (via actions.sh dispatch), otherwise calculate
+if [ -n "${SCRIPT_DIR:-}" ]; then
+    PROJECT_DIR="$SCRIPT_DIR"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+fi
 GLOBAL_BASE="/usr/local/share/agents-manager"
 
-source "${SCRIPT_DIR}/_common.sh"
+source "${PROJECT_DIR}/extensions/install/_common.sh"
 
 # =====================================================================
 # Arguments

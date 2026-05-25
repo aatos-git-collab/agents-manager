@@ -7,10 +7,18 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Use SCRIPT_DIR from parent if passed, otherwise calculate from this script's location
+if [ -n "${SCRIPT_DIR:-}" ]; then
+    # Called from actions.sh — SCRIPT_DIR is the project root
+    PROJECT_DIR="$SCRIPT_DIR"
+else
+    # Called directly — calculate project root from this script's location
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+fi
 GLOBAL_BASE="/usr/local/share/agents-manager"
 
-source "${SCRIPT_DIR}/_common.sh"
+source "${PROJECT_DIR}/extensions/install/_common.sh"
 
 log_step "Global install..."
 log_info "Global dir: $GLOBAL_BASE"
@@ -18,7 +26,7 @@ log_info "Launchers: /usr/local/bin"
 
 # Sync to global base
 log_step "Copying to $GLOBAL_BASE..."
-sync_to_global "$SCRIPT_DIR/../.."
+sync_to_global "$PROJECT_DIR"
 
 # Create .env.global template if missing
 mkdir -p "$GLOBAL_BASE/presets/hermes"

@@ -71,8 +71,8 @@ dispatch() {
     # Source common utilities
     load_extension "$ext_name"
 
-    # Execute the command
-    bash "$ext_script" "$@"
+    # Pass SCRIPT_DIR so extension uses same base as actions.sh
+    SCRIPT_DIR="$SCRIPT_DIR" bash "$ext_script" "$@"
 }
 
 # =====================================================================
