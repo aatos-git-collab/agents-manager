@@ -1,0 +1,9 @@
+{
+  "name": "hermes-default",
+  "description": "Default profile for Hermes agents",
+  "fingerprint": "windows_chrome_1",
+  "geo": "us-east",
+  "proxy": null,
+  "cookies": null,
+  "created": "2026-04-03"
+}

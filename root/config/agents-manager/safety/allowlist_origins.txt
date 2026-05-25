@@ -1,0 +1,7 @@
+# Allowed Git Push Origins — Private Repos Only
+# One domain/org per line. Lines starting with # are comments.
+# Agent cannot modify this file (immutable). Human: run unlock-safety to edit.
+#
+# Format: github.com/org-name  OR  gitlab.com/org-name  OR  full URL pattern
+github.com/aatos-git-collab
+github.com/novem-ai

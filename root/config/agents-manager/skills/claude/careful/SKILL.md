@@ -1,0 +1,1 @@
+/root/.claude/skills/gstack/careful/SKILL.md

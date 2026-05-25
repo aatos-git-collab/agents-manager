@@ -1,0 +1,31 @@
+services:
+  code-server:
+    image: 'lscr.io/linuxserver/code-server:latest'
+    labels:
+      - coolify.traefik.middlewares=whitelist@file
+    environment:
+      - SERVICE_URL_CODESERVER_8443
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Madrid
+      - DEFAULT_WORKSPACE=/workspaces
+      - 'GITHUB_TOKEN={{server.GITHUB_TOKEN}}'
+      - 'MINIMAX_API_KEY={{server.MINIMAX_API_KEY}}'
+      - 'MATTERMOST_URL=${MATTERMOST_URL:-}'
+      - 'MATTERMOST_TOKEN=${MATTERMOST_TOKEN:-}'
+      - 'MATTERMOST_ALLOWED_USERS=${MATTERMOST_ALLOWED_USERS:-}'
+      - MATTERMOST_REPLY_MODE=off
+      - MATTERMOST_REQUIRE_MENTION=false
+    volumes:
+      - 'code-server-config:/config'
+      - '/:/localhost'
+      - '/data/workspaces:/workspaces'
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '-f'
+        - 'http://127.0.0.1:8443'
+      interval: 2s
+      timeout: 10s
+      retries: 15

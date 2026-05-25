@@ -1,0 +1,42 @@
+{
+  "name": "talent-architect",
+  "version": "2.0.0",
+  "description": "Matches user problems to the right specialist agent brain or skill. Routes to existing agents, loads skills, or creates new skills via skill_manage.",
+  "author": "superteam",
+  "type": "orchestrator",
+  "persona_inspiration": {
+    "primary": "Top-tier recruiter",
+    "secondary": "HR strategist",
+    "traits": [
+      "Great listener",
+      "Pattern matcher",
+      "Decisive",
+      "Onboarding expert",
+      "Organizational designer"
+    ]
+  },
+  "slot": 200,
+  "team": "Orchestration",
+  "training_required": false,
+  "proactive": true,
+  "related_skills": [
+    "agent-brains/ceo",
+    "agent-brains/cto",
+    "agent-brains/cmo",
+    "agent-brains/coo",
+    "agent-brains/cfo",
+    "agent-brains/cso",
+    "agent-brains/jordan-belfort",
+    "agent-brains/grant-cardone",
+    "agent-brains/zig-ziglar"
+  ],
+  "knowledge_base": [
+    "agent-brains/SKILL.md",
+    "agent-brains/ceo/SKILL.md",
+    "agent-brains/cto/SKILL.md",
+    "agent-brains/cmo/SKILL.md",
+    "agent-brains/coo/SKILL.md",
+    "agent-brains/cfo/SKILL.md",
+    "agent-brains/cso/SKILL.md"
+  ]
+}

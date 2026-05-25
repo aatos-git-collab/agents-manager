@@ -1,0 +1,8 @@
+{
+  "name": "observability",
+  "category": "observability",
+  "version": "1.0.0",
+  "description": "Observability and monitoring skills for logging, metrics, and system visibility",
+  "created": "2026-04-22",
+  "type": "category"
+}

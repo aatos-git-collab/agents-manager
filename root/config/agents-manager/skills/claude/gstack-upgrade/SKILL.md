@@ -1,0 +1,1 @@
+/root/.claude/skills/gstack/gstack-upgrade/SKILL.md

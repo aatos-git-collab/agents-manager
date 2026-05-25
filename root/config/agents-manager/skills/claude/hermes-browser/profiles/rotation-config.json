@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "rotate_on_start": true,
+  "rotate_on_restart": true,
+  "exclude_ios": true,
+  "exclude_linux": true,
+  "fingerprints": [
+    "windows_chrome",
+    "windows_firefox",
+    "macos_chrome",
+    "macos_safari",
+    "macos_firefox",
+    "android_chrome",
+    "android_samsung"
+  ]
+}

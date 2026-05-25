@@ -1,0 +1,12 @@
+{
+  "name": "dir-case-swap",
+  "description": "Swap directory name across kebab-case, snake_case, and CamelCase variants",
+  "variables": ["{{from}}", "{{to}}"],
+  "rules": [
+    {"type": "rename_dir", "from": "{{from}}", "to": "{{to}}"},
+    {"type": "rename_dir", "from": "{{from}}-team", "to": "{{to}}-team"},
+    {"type": "content_replace", "pattern": "{{from}}", "replace": "{{to}}", "flags": ["i", "g"]},
+    {"type": "content_replace", "pattern": "{{from}}-team", "replace": "{{to}}-team", "flags": ["i", "g"]},
+    {"type": "content_replace", "pattern": "{{from}}_team", "replace": "{{to}}_team", "flags": ["i", "g"]}
+  ]
+}

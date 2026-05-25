@@ -1,0 +1,14 @@
+{
+  "name": "work-profile",
+  "proxy_url": "",
+  "proxy_type": "",
+  "timezone": "UTC",
+  "fingerprint": "windows_chrome",
+  "created": "2026-04-03T11:13:24+00:00",
+  "last_used": null,
+  "cookies_file": "/root/stealth-browser/profiles/cookies/work-profile.json",
+  "state": {
+    "tab_count": 1,
+    "url": null
+  }
+}

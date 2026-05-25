@@ -1,0 +1,8 @@
+{
+  "name": "hermes-browser",
+  "category": "hermes-browser",
+  "version": "1.0.0",
+  "description": "Camoufox browser automation — stealth browser with session management, fingerprint rotation, geo presets, and human-behavior simulation",
+  "created": "2026-04-22",
+  "type": "category"
+}

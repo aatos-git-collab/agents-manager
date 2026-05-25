@@ -1,0 +1,74 @@
+{
+  "us-east": {
+    "locale": "en-US",
+    "timezone": "America/New_York",
+    "lat": 40.7128,
+    "lon": -74.006
+  },
+  "us-west": {
+    "locale": "en-US",
+    "timezone": "America/Los_Angeles",
+    "lat": 34.0522,
+    "lon": -118.2437
+  },
+  "uk": {
+    "locale": "en-GB",
+    "timezone": "Europe/London",
+    "lat": 51.5074,
+    "lon": -0.1278
+  },
+  "germany": {
+    "locale": "de-DE",
+    "timezone": "Europe/Berlin",
+    "lat": 52.52,
+    "lon": 13.405
+  },
+  "japan": {
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "lat": 35.6895,
+    "lon": 139.6917
+  },
+  "singapore": {
+    "locale": "en-SG",
+    "timezone": "Asia/Singapore",
+    "lat": 1.3521,
+    "lon": 103.8198
+  },
+  "australia": {
+    "locale": "en-AU",
+    "timezone": "Australia/Sydney",
+    "lat": -33.8688,
+    "lon": 151.2093
+  },
+  "vietnam": {
+    "locale": "vi-VN",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "lat": 10.8231,
+    "lon": 106.6297
+  },
+  "france": {
+    "locale": "fr-FR",
+    "timezone": "Europe/Paris",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  "brazil": {
+    "locale": "pt-BR",
+    "timezone": "America/Sao_Paulo",
+    "lat": -23.5505,
+    "lon": -46.6333
+  },
+  "canada": {
+    "locale": "en-CA",
+    "timezone": "America/Toronto",
+    "lat": 43.6532,
+    "lon": -79.3832
+  },
+  "india": {
+    "locale": "en-IN",
+    "timezone": "Asia/Kolkata",
+    "lat": 28.6139,
+    "lon": 77.209
+  }
+}

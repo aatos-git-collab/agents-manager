@@ -1,0 +1,140 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+echo "**** agents-manager init: installing claude agents ****"
+
+AGENTS_DIR="/config/agents-manager"
+
+# create user with passwordless sudo (if not exists)
+if ! id "user" &>/dev/null; then
+    useradd -m -s /bin/bash user
+    echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/user
+    chmod 440 /etc/sudoers.d/user
+    usermod -aG sudo user
+    echo "created user account"
+fi
+
+# Install claude for root if not present
+if ! command -v claude &>/dev/null; then
+    echo "**** installing claude for root ****"
+    curl -fsSL https://claude.ai/install.sh | bash
+else
+    echo "claude already installed for root"
+fi
+
+# configure claude for root
+mkdir -p /root/.claude/settings
+cat > /root/.claude/settings.json << 'SETTINGS_EOF'
+{
+  "skipDangerousModePermissionPrompt": true,
+  "env": {
+    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
+    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
+    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+    "teammateMode": "tmux",
+    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
+    "MINIMAX_API_KEY": "'"${MINIMAX_API_KEY}"'",
+    "GITHUB_TOKEN": "'"${GITHUB_TOKEN}"'",
+    "MATTERMOST_URL": "'"${MATTERMOST_URL}"'",
+    "MATTERMOST_TOKEN": "'"${MATTERMOST_TOKEN}"'"
+  },
+  "dangerouslyAlwaysAllow": true,
+  "allow": [
+    "Edit",
+    "Write",
+    "Bash",
+    "Read",
+    "Glob",
+    "Grep",
+    "WebFetch",
+    "WebSearch",
+    "TodoRead",
+    "TodoWrite"
+  ]
+}
+SETTINGS_EOF
+
+# add PATH to root bashrc
+if ! grep -q '.local/bin' /root/.bashrc 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
+fi
+
+# create .claude.json for root (skip onboarding)
+cat > /root/.claude.json << 'EOF'
+{
+  "hasCompletedOnboarding": true
+}
+EOF
+
+# install claude for user if not present
+if ! su - user -c "command -v claude" &>/dev/null; then
+    echo "**** installing claude for user ****"
+    su - user -c "curl -fsSL https://claude.ai/install.sh | bash"
+else
+    echo "claude already installed for user"
+fi
+
+# configure claude for user
+su - user -c "mkdir -p ~/.claude/settings"
+su - user -c 'cat > ~/.claude/settings.json << ' "SETTINGS_EOF" '
+{
+  "skipDangerousModePermissionPrompt": true,
+  "env": {
+    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
+    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
+    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+    "teammateMode": "tmux",
+    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
+    "MINIMAX_API_KEY": "'"${MINIMAX_API_KEY}"'",
+    "GITHUB_TOKEN": "'"${GITHUB_TOKEN}"'",
+    "MATTERMOST_URL": "'"${MATTERMOST_URL}"'",
+    "MATTERMOST_TOKEN": "'"${MATTERMOST_TOKEN}"'"
+  },
+  "dangerouslyAlwaysAllow": true,
+  "allow": [
+    "Edit",
+    "Write",
+    "Bash",
+    "Read",
+    "Glob",
+    "Grep",
+    "WebFetch",
+    "WebSearch",
+    "TodoRead",
+    "TodoWrite"
+  ]
+}
+'"'"'SETTINGS_EOF'"'"''
+
+su - user -c 'echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc'
+su - user -c 'cat > ~/.claude.json << '"'"'EOF'"'"'
+{
+  "hasCompletedOnboarding": true
+}
+EOF
+
+# create agents-manager launchers in /usr/local/bin
+if ln -sf /config/agents-manager/actions.sh /usr/local/bin/agents-manager 2>/dev/null; then
+    echo "created /usr/local/bin/agents-manager"
+fi
+if ln -sf /config/agents-manager/actions.sh /usr/local/bin/actions 2>/dev/null; then
+    echo "created /usr/local/bin/actions"
+fi
+
+# symlink workspace to user home
+if [ -d "/config/workspace" ] && [ ! -L "/home/user" ]; then
+    ln -sf /config/workspace /home/user 2>/dev/null || true
+fi
+
+echo "**** agents-manager init complete ****"

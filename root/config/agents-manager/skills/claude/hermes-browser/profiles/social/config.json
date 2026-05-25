@@ -1,0 +1,12 @@
+{
+    "name": "social",
+    "fingerprint": "android",
+    "proxy_url": "",
+    "proxy_type": "",
+    "geo_preset": "",
+    "timezone": "UTC",
+    "locale": "en-US",
+    "created": "2026-04-03T14:15:10+00:00",
+    "last_used": null,
+    "cookies_file": "/root/stealth-browser/profiles/cookies/social.json"
+}

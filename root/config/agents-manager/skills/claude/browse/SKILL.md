@@ -1,0 +1,1 @@
+/root/.claude/skills/gstack/browse/SKILL.md

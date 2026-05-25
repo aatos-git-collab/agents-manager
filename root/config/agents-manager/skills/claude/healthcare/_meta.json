@@ -1,0 +1,8 @@
+{
+  "name": "healthcare",
+  "category": "healthcare",
+  "version": "1.0.0",
+  "description": "Healthcare-specific skills — EMR patterns, PHI compliance, clinical decision support, and HIPAA requirements",
+  "created": "2026-04-22",
+  "type": "category"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "org-rename",
+  "description": "Rename an organization handle everywhere in code, docs, and config files",
+  "variables": ["{{from_org}}", "{{to_org}}"],
+  "rules": [
+    {"type": "content_replace", "pattern": "{{from_org}}", "replace": "{{to_org}}", "flags": ["i", "g"]},
+    {"type": "content_replace", "pattern": "{{from_org}}-", "replace": "{{to_org}}-", "flags": ["i", "g"]}
+  ]
+}

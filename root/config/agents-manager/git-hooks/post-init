@@ -1,0 +1,42 @@
+#!/bin/bash
+# Detect AGENTS_HOME — self-locating, works on any home directory
+if [ -z "$AGENTS_HOME" ]; then
+    _self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    case "$(basename "$_self")" in
+        git-hooks)        AGENTS_HOME="$(dirname "$_self")" ;;
+        .monitor)         AGENTS_HOME="$(dirname "$_self")" ;;
+        watchdogs)        AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        safety-scripts)   AGENTS_HOME="$(dirname "$_self")" ;;
+        scripts)          AGENTS_HOME="$(dirname "$(dirname "$_self")")" ;;
+        *)                AGENTS_HOME="/root/.agents-manager" ;;
+    esac
+    export AGENTS_HOME
+fi
+
+# =====================================================================
+# git-init hook — MUST be private, MUST be allowed org
+# Runs after every `git init` to enforce private repo policy
+# =====================================================================
+set -euo pipefail
+
+LOG="$AGENTS_HOME/logs/git-safety.log"
+mkdir -p "$(dirname "$LOG")"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [GIT-INIT] $*" | tee -a "$LOG"; }
+
+ALLOWED_ORIGINS=(
+    "github.com/aatos-git-collab"
+    "github.com/novem-ai"
+    "github.com/HKUDS"
+)
+
+# Warn if no remote configured yet (user will need to add one)
+# The actual push block happens in pre-push hook.
+# Here we just flag that the repo was initialized and warn about privacy.
+
+log "Local repo initialized at $(pwd)"
+log "Remote not set yet — pre-push hook will block non-private remotes."
+log "To set remote safely:"
+log "  git remote add origin git@github.com:aatos-git-collab/<repo>.git"
+log ""
+log "Policy: ALL repos must be private. Never create public repos."

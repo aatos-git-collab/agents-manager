@@ -1,0 +1,78 @@
+{
+  "repos": {
+    "AatosTeam": {
+      "source": "https://github.com/HKUDS/ClawTeam.git",
+      "upstream_remote": "upstream",
+      "working_remote": "origin",
+      "local_path": "~/.hermes/tools/AatosTeam",
+      "origin_url": "https://github.com/aatos-git-collab/AatosTeam.git",
+      "skill_sync_target": "aatosteam",
+      "rebrand_rules": [
+        {
+          "type": "rename_dir",
+          "from": "clawteam",
+          "to": "aatosteam"
+        },
+        {
+          "type": "rename_dir",
+          "from": "claw-team",
+          "to": "aatos-team"
+        },
+        {
+          "type": "content_replace",
+          "pattern": "clawteam",
+          "replace": "aatosteam",
+          "flags": [
+            "i",
+            "g"
+          ]
+        },
+        {
+          "type": "content_replace",
+          "pattern": "claw-team",
+          "replace": "aatos-team",
+          "flags": [
+            "i",
+            "g"
+          ]
+        },
+        {
+          "type": "content_replace",
+          "pattern": "ClawTeam",
+          "replace": "AatosTeam",
+          "flags": [
+            "i",
+            "g"
+          ]
+        },
+        {
+          "type": "content_replace",
+          "pattern": "claw_team",
+          "replace": "aatos_team",
+          "flags": [
+            "i",
+            "g"
+          ]
+        }
+      ],
+      "watch": {
+        "enabled": true,
+        "schedule": "0 */6 * * *",
+        "ignore_patterns": [
+          "node_modules/**",
+          ".git/**",
+          "*.lock",
+          "dist/**",
+          "build/**",
+          "__pycache__/**"
+        ],
+        "commit_message": "rebrand: sync + apply ClawTeam\u2192AatosTeam [auto]"
+      }
+    }
+  },
+  "watchdog": {
+    "log_dir": "~/.hermes/skills/rebranding-tools/logs",
+    "state_file": "~/.hermes/skills/rebranding-tools/state.json",
+    "max_log_files": 30
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "skillName": "coolify-manager",
+  "version": "1.0.0",
+  "agents": ["main"],
+  "permissions": ["file_read", "file_write"],
+  "role": {
+    "slot": "100",
+    "type": "utility",
+    "delegation": true,
+    "selfLearning": true
+  },
+  "scripts": ["run.sh"],
+  "dependencies": [],
+  "selfLearning": {
+    "enabled": true,
+    "patternDir": "/root/.hermes/memory/patterns/coolify-manager/"
+  }
+}
