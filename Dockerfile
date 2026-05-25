@@ -147,9 +147,24 @@ with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
 PYEOF
 RUN su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
 
-# configure VSCode settings for user (code-server runs as abc, not user)
-RUN mkdir -p /config/.local/share/code-server/User /config/.cache/Microsoft && \
-    chown -R abc:abc /config/.local /config/.cache && \
+# configure VSCode settings for code-server (uses HOME=/config)
+# code-server on Linux stores settings at ~/.config/code-server/User/settings.json
+RUN mkdir -p /config/.config/code-server/User && \
+    chown -R abc:abc /config/.config && \
+    cat > /config/.config/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
+{
+  "workbench.colorTheme": "Default Dark Modern",
+  "window.menuBarVisibility": "classic",
+  "security.workspace.trust.enabled": false,
+  "github.copilot.chat.enabled": false,
+  "chat.location": "panel",
+  "workbench.panel.defaultChatView": "cline"
+}
+VSCODESETTINGS_EOF
+
+# also create .local/share as fallback (some versions use this)
+RUN mkdir -p /config/.local/share/code-server/User && \
+    chown -R abc:abc /config/.local && \
     cat > /config/.local/share/code-server/User/settings.json << 'VSCODESETTINGS_EOF'
 {
   "workbench.colorTheme": "Default Dark Modern",
