@@ -52,7 +52,8 @@ RUN \
     nano \
     net-tools \
     sudo \
-    sqlite3 && \
+    sqlite3 \
+    python3 && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -87,68 +88,68 @@ RUN if ! id "user" &>/dev/null; then \
 # install claude for root
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# write root settings.json via python script file
-RUN printf '%s\n' \
-  "import os, json" \
-  "settings = {" \
-  "  'skipDangerousModePermissionPrompt': True," \
-  "  'env': {" \
-  "    'ANTHROPIC_BASE_URL': os.environ.get('MINIMAX_ANTHROPIC_BASE_URL', '')," \
-  "    'ANTHROPIC_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_SONNET_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_OPUS_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_HAIKU_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'CLAUDE_CODE_SUBAGENT_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_AUTH_TOKEN': os.environ.get('ANTHROPIC_API_KEY', '')," \
-  "    'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS': '10'," \
-  "    'teammateMode': 'tmux'" \
-  "  }," \
-  "  'dangerouslyAlwaysAllow': True," \
-  "  'allow': ['Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoRead', 'TodoWrite']" \
-  "}" \
-  "os.makedirs('/root/.claude/settings', exist_ok=True)" \
-  "with open('/root/.claude/settings.json', 'w') as f:" \
-  "    json.dump(settings, f, indent=2)" \
-  > /tmp/write_settings.py && \
-  python3 /tmp/write_settings.py && rm /tmp/write_settings.py
+# write root settings.json via heredoc (python3 installed after dependencies)
+RUN cat > /tmp/write_settings.py << 'PYEOF'
+import os, json
+settings = {
+  "skipDangerousModePermissionPrompt": True,
+  "env": {
+    "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
+    "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
+    "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+    "teammateMode": "tmux"
+  },
+  "dangerouslyAlwaysAllow": True,
+  "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
+}
+os.makedirs("/root/.claude/settings", exist_ok=True)
+with open("/root/.claude/settings.json", "w") as f:
+    json.dump(settings, f, indent=2)
+PYEOF
+RUN python3 /tmp/write_settings.py && rm /tmp/write_settings.py
 
 # add PATH to root bashrc
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
 
 # create .claude.json for root (skip onboarding)
-RUN printf '{"hasCompletedOnboarding": true}\n' > /root/.claude.json
+RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json
 
 # install claude for user
 RUN su - user -c "curl -fsSL https://claude.ai/install.sh | bash"
 
-# write user settings.json via python script file
-RUN printf '%s\n' \
-  "import os, json" \
-  "settings = {" \
-  "  'skipDangerousModePermissionPrompt': True," \
-  "  'env': {" \
-  "    'ANTHROPIC_BASE_URL': os.environ.get('MINIMAX_ANTHROPIC_BASE_URL', '')," \
-  "    'ANTHROPIC_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_SONNET_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_OPUS_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_DEFAULT_HAIKU_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'CLAUDE_CODE_SUBAGENT_MODEL': os.environ.get('LLM_MODEL', '')," \
-  "    'ANTHROPIC_AUTH_TOKEN': os.environ.get('ANTHROPIC_API_KEY', '')," \
-  "    'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS': '10'," \
-  "    'teammateMode': 'tmux'" \
-  "  }," \
-  "  'dangerouslyAlwaysAllow': True," \
-  "  'allow': ['Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoRead', 'TodoWrite']" \
-  "}" \
-  "os.makedirs(os.path.expanduser('~/.claude/settings'), exist_ok=True)" \
-  "with open(os.path.expanduser('~/.claude/settings.json'), 'w') as f:" \
-  "    json.dump(settings, f, indent=2)" \
-  > /tmp/write_user_settings.py && \
-  su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
+# write user settings.json via heredoc
+RUN cat > /tmp/write_user_settings.py << 'PYEOF'
+import os, json
+settings = {
+  "skipDangerousModePermissionPrompt": True,
+  "env": {
+    "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
+    "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
+    "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
+    "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
+    "teammateMode": "tmux"
+  },
+  "dangerouslyAlwaysAllow": True,
+  "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
+}
+os.makedirs(os.path.expanduser("~/.claude/settings"), exist_ok=True)
+with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
+    json.dump(settings, f, indent=2)
+PYEOF
+RUN su - user -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
 
 # add PATH to user bashrc and create .claude.json
 RUN su - user -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc" && \
-    su - user -c "printf '{\"hasCompletedOnboarding\": true}\n' > ~/.claude.json"
+    su - user -c "echo '{\"hasCompletedOnboarding\": true}' > ~/.claude.json"
 
 # ports and volumes
 EXPOSE 8443
