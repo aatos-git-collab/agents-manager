@@ -186,4 +186,5 @@ RUN su - aatos -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc"
 EXPOSE 8443
 
 # CODEX marker - force rebuild
-LABEL codex.rebuild="$(date +%s)"
+# TIMESTAMP: 2026-05-25T20:50:00Z
+LABEL codex.rebuild="2026-05-25-2050"
