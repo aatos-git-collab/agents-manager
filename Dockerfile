@@ -13,7 +13,7 @@ LABEL maintainer="aptalca"
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/config"
 
-# env args from .env
+# env args from .env (Coolify passes these in)
 ARG GITHUB_TOKEN
 ARG LLM_MODEL
 ARG MINIMAX_ANTHROPIC_BASE_URL
@@ -73,14 +73,13 @@ RUN \
     /var/lib/apt/lists/* \
     /var/tmp/*
 
-# copy local files (includes agents-manager and install-claude.sh)
+# copy local files (includes agents-manager at root/config/agents-manager)
 COPY /root /
 
 # create user with passwordless sudo
 RUN if ! id "user" &>/dev/null; then \
       useradd -m -s /bin/bash user; \
     fi && \
-    echo "user:" | chpasswd -e 2>/dev/null || usermod -p "" user && \
     echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/user && \
     chmod 440 /etc/sudoers.d/user && \
     usermod -aG sudo user
@@ -88,88 +87,61 @@ RUN if ! id "user" &>/dev/null; then \
 # install claude for root
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# configure claude for root
-RUN mkdir -p ~/.claude/settings && \
-    cat > ~/.claude/settings.json << 'SETTINGS_EOF'
-{
-  "skipDangerousModePermissionPrompt": true,
-  "env": {
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux"
+# write root settings.json via python (avoids heredoc parsing issues)
+RUN python3 -c "
+import os
+settings = {
+  'skipDangerousModePermissionPrompt': True,
+  'env': {
+    'ANTHROPIC_BASE_URL': os.environ.get('MINIMAX_ANTHROPIC_BASE_URL', ''),
+    'ANTHROPIC_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_SONNET_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_OPUS_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_HAIKU_MODEL': os.environ.get('LLM_MODEL', ''),
+    'CLAUDE_CODE_SUBAGENT_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_AUTH_TOKEN': os.environ.get('ANTHROPIC_API_KEY', ''),
+    'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS': '10',
+    'teammateMode': 'tmux'
   },
-  "dangerouslyAlwaysAllow": true,
-  "allow": [
-    "Edit",
-    "Write",
-    "Bash",
-    "Read",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "TodoRead",
-    "TodoWrite"
-  ]
+  'dangerouslyAlwaysAllow': True,
+  'allow': ['Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoRead', 'TodoWrite']
 }
-SETTINGS_EOF
+os.makedirs('/root/.claude/settings', exist_ok=True)
+import json
+with open('/root/.claude/settings.json', 'w') as f:
+    json.dump(settings, f, indent=2)
+"
 
 # add PATH to root bashrc
-RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
 
 # create .claude.json for root (skip onboarding)
-RUN cat > ~/.claude.json << 'EOF'
-{
-  "hasCompletedOnboarding": true
-}
-EOF
+RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json
 
 # install claude for user
 RUN su - user -c "curl -fsSL https://claude.ai/install.sh | bash"
 
-# configure claude for user
-RUN su - user -c "mkdir -p ~/.claude/settings" && \
-    su - user -c 'cat > ~/.claude/settings.json << '"'"'SETTINGS_EOF'"'"'
-{
-  "skipDangerousModePermissionPrompt": true,
-  "env": {
-    "ANTHROPIC_BASE_URL": "'"${MINIMAX_ANTHROPIC_BASE_URL}"'",
-    "ANTHROPIC_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"${LLM_MODEL}"'",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "'"${LLM_MODEL}"'",
-    "ANTHROPIC_AUTH_TOKEN": "'"${ANTHROPIC_API_KEY}"'",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux"
+# write user settings.json via python3 -c
+RUN su - user -c "python3 -c \"import os, json; settings = {
+  'skipDangerousModePermissionPrompt': True,
+  'env': {
+    'ANTHROPIC_BASE_URL': os.environ.get('MINIMAX_ANTHROPIC_BASE_URL', ''),
+    'ANTHROPIC_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_SONNET_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_OPUS_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_DEFAULT_HAIKU_MODEL': os.environ.get('LLM_MODEL', ''),
+    'CLAUDE_CODE_SUBAGENT_MODEL': os.environ.get('LLM_MODEL', ''),
+    'ANTHROPIC_AUTH_TOKEN': os.environ.get('ANTHROPIC_API_KEY', ''),
+    'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS': '10',
+    'teammateMode': 'tmux'
   },
-  "dangerouslyAlwaysAllow": true,
-  "allow": [
-    "Edit",
-    "Write",
-    "Bash",
-    "Read",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "TodoRead",
-    "TodoWrite"
-  ]
-}
-SETTINGS_EOF'"'"'' && \
-    su - user -c 'echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> ~/.bashrc' && \
-    su - user -c 'cat > ~/.claude.json << '"'"'EOF'"'"'
-{
-  "hasCompletedOnboarding": true
-}
-EOF'"'"''
+  'dangerouslyAlwaysAllow': True,
+  'allow': ['Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoRead', 'TodoWrite']
+}; os.makedirs(os.path.expanduser('~/.claude/settings'), exist_ok=True); open(os.path.expanduser('~/.claude/settings.json'), 'w').write(json.dumps(settings, indent=2))\""
+
+# add PATH to user bashrc and create .claude.json
+RUN su - user -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc" && \
+    su - user -c "echo '{\"hasCompletedOnboarding\": true}' > ~/.claude.json"
 
 # ports and volumes
 EXPOSE 8443
