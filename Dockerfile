@@ -102,5 +102,3 @@ EXPOSE 8443
 # Entry point - runs setup then starts code-server
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/app/code-server/bin/code-server", "--bind-addr", "0.0.0.0:8443", "--auth", "none", "--user-data-dir", "/config/data"]
-# Auto-deploy test
-LABEL test="$(date +%s)"
