@@ -43,18 +43,25 @@ ENV MATTERMOST_REQUIRE_MENTION=${MATTERMOST_REQUIRE_MENTION}
 ENV COOLIFY_API_KEY=${COOLIFY_API_KEY}
 ENV COOLIFY_URL=${COOLIFY_URL}
 
-# Install runtime dependencies
+# Install runtime dependencies and all agents
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
   apt-get install -y \
     git \
+    curl \
     libatomic1 \
     nano \
     net-tools \
     sudo \
     sqlite3 \
     python3 && \
+  echo "**** install claude ****" && \
+  curl -fsSL https://claude.ai/install.sh | bash && \
+  echo "**** install codex ****" && \
+  curl -fsSL https://chatgpt.com/codex/install.sh | sh && \
+  echo "**** install hermes ****" && \
+  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -80,23 +87,11 @@ COPY /root/ /
 # Make entrypoint executable
 RUN chmod +x /entrypoint.sh
 
-# Install claude for root
-RUN curl -fsSL https://claude.ai/install.sh | bash
-
-# Add PATH to root bashrc
+# Add PATH to bashrc
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc || true
 
 # Create .claude.json for root (skip onboarding)
 RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json || true
-
-# Create code-server settings directory with correct permissions
-RUN mkdir -p /config/.config/code-server/User && \
-    chown -R abc:abc /config/.config 2>/dev/null || true
-
-# Copy VSCode settings if available
-RUN if [ -f /config/agents-manager/settings.json ]; then \
-      cp /config/agents-manager/settings.json /config/.config/code-server/User/settings.json; \
-    fi
 
 # Set working directory
 WORKDIR /config
