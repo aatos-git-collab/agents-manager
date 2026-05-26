@@ -4,11 +4,10 @@ FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 
 # set version label
 ARG BUILD_DATE
-ARG VERSION="v1.2.0-codex"
+ARG VERSION="1.0.0-codex"
 ARG CODE_RELEASE
-LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="aptalca"
-LABEL org.label-schema.build="codex-branch"
+LABEL build_version="Codex version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="aatos"
 
 # environment settings
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -44,6 +43,7 @@ ENV MATTERMOST_REQUIRE_MENTION=${MATTERMOST_REQUIRE_MENTION}
 ENV COOLIFY_API_KEY=${COOLIFY_API_KEY}
 ENV COOLIFY_URL=${COOLIFY_URL}
 
+# Install runtime dependencies
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
@@ -70,97 +70,40 @@ RUN \
   echo "**** clean up ****" && \
   apt-get clean && \
   rm -rf \
-    /config/* \
     /tmp/* \
     /var/lib/apt/lists/* \
     /var/tmp/*
 
-# copy local files (includes agents-manager at root/config/agents-manager)
-COPY /root /
+# Copy local files (includes agents-manager at /config/agents-manager)
+COPY /root/ /
 
-# Copy VSCode settings to correct location
-RUN mkdir -p /config/.config/code-server/User && \
-    chown -R abc:abc /config/.config && \
-    cp /root/config/agents-manager/settings.json /config/.config/code-server/User/settings.json
+# Make entrypoint executable
+RUN chmod +x /entrypoint.sh
 
-# create aatos user with passwordless sudo (UID 911 for code-server compatibility)
-RUN if ! id "aatos" &>/dev/null; then \
-      useradd -m -u 911 -g abc -s /bin/bash aatos; \
-    fi && \
-    echo "aatos ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/aatos && \
-    chmod 440 /etc/sudoers.d/aatos && \
-    echo "root ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/root && \
-    chmod 440 /etc/sudoers.d/root
-
-# install claude for root
+# Install claude for root
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# write root settings.json via heredoc (python3 installed after dependencies)
-RUN cat > /tmp/write_settings.py << 'PYEOF'
-import os, json
-settings = {
-  "skipDangerousModePermissionPrompt": True,
-  "env": {
-    "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
-    "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
-    "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux"
-  },
-  "dangerouslyAlwaysAllow": True,
-  "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
-}
-os.makedirs("/root/.claude/settings", exist_ok=True)
-with open("/root/.claude/settings.json", "w") as f:
-    json.dump(settings, f, indent=2)
-PYEOF
-RUN python3 /tmp/write_settings.py && rm /tmp/write_settings.py
+# Add PATH to root bashrc
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc || true
 
-# add PATH to root bashrc
-RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
+# Create .claude.json for root (skip onboarding)
+RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json || true
 
-# create .claude.json for root (skip onboarding)
-RUN echo '{"hasCompletedOnboarding": true}' > /root/.claude.json
+# Create code-server settings directory with correct permissions
+RUN mkdir -p /config/.config/code-server/User && \
+    chown -R abc:abc /config/.config 2>/dev/null || true
 
-# install claude for aatos
-RUN su - aatos -c "curl -fsSL https://claude.ai/install.sh | bash"
+# Copy VSCode settings if available
+RUN if [ -f /config/agents-manager/settings.json ]; then \
+      cp /config/agents-manager/settings.json /config/.config/code-server/User/settings.json; \
+    fi
 
-# write user settings.json via heredoc
-RUN cat > /tmp/write_user_settings.py << 'PYEOF'
-import os, json
-settings = {
-  "skipDangerousModePermissionPrompt": True,
-  "env": {
-    "ANTHROPIC_BASE_URL": os.environ.get("MINIMAX_ANTHROPIC_BASE_URL", ""),
-    "ANTHROPIC_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": os.environ.get("LLM_MODEL", ""),
-    "CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get("LLM_MODEL", ""),
-    "ANTHROPIC_AUTH_TOKEN": os.environ.get("ANTHROPIC_API_KEY", ""),
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "10",
-    "teammateMode": "tmux"
-  },
-  "dangerouslyAlwaysAllow": True,
-  "allow": ["Edit", "Write", "Bash", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "TodoRead", "TodoWrite"]
-}
-os.makedirs(os.path.expanduser("~/.claude/settings"), exist_ok=True)
-with open(os.path.expanduser("~/.claude/settings.json"), "w") as f:
-    json.dump(settings, f, indent=2)
-PYEOF
-RUN su - aatos -c "python3 /tmp/write_user_settings.py" && rm /tmp/write_user_settings.py
+# Set working directory
+WORKDIR /config
 
-# add PATH to aatos bashrc and create .claude.json
-RUN su - aatos -c "echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc" && \
-    su - aatos -c "echo '{\"hasCompletedOnboarding\": true}' > ~/.claude.json"
-
-# ports and volumes
+# Expose port
 EXPOSE 8443
 
-# CODEX marker - force rebuild
-# TIMESTAMP: 2026-05-25T21:20:00Z
-LABEL codex.rebuild="2026-05-25-2120"
+# Entry point - runs setup then starts code-server
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/app/code-server/bin/code-server", "--bind-addr", "0.0.0.0:8443", "--auth", "none", "--user-data-dir", "/config/data"]
